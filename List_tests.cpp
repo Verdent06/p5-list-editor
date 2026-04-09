@@ -1,9 +1,15 @@
+/* List_tests.cpp
+ *
+ * Unit tests for List<T>. Uses the EECS 280 unit_test_framework.
+ */
+
 #include "List.hpp"
 #include "unit_test_framework.hpp"
 
 #include <vector>
 
-// Collect list elements in forward order (helps ASSERT_SEQUENCE_EQUAL and prints well).
+// Builds a vector of list elements in forward order, for use with
+// ASSERT_SEQUENCE_EQUAL (readable diagnostics from the framework).
 template <typename T>
 static std::vector<T> list_to_vector(const List<T> &lst) {
   std::vector<T> out;
@@ -13,9 +19,9 @@ static std::vector<T> list_to_vector(const List<T> &lst) {
   return out;
 }
 
-// ---------------------------------------------------------------------------
-// 1. Core functionality & size
-// ---------------------------------------------------------------------------
+// =============================================================================
+// 1. Core functionality and size
+// =============================================================================
 
 TEST(default_constructor_empty) {
   List<int> lst;
@@ -120,9 +126,9 @@ TEST(clear_then_push) {
   ASSERT_EQUAL(lst.back(), 9);
 }
 
-// ---------------------------------------------------------------------------
-// 2. Big three (memory & deep copying)
-// ---------------------------------------------------------------------------
+// =============================================================================
+// 2. Big three (memory and deep copying)
+// =============================================================================
 
 TEST(copy_constructor_deep_copy) {
   List<int> orig;
@@ -144,26 +150,27 @@ TEST(copy_constructor_deep_copy) {
 }
 
 TEST(assignment_deep_copy_independent) {
-  List<int> a;
-  a.push_back(5);
-  a.push_back(6);
+  List<int> assignee;
+  assignee.push_back(5);
+  assignee.push_back(6);
 
-  List<int> b;
-  b.push_back(100);
-  b.push_back(200);
-  b.push_back(300);
+  List<int> donor;
+  donor.push_back(100);
+  donor.push_back(200);
+  donor.push_back(300);
 
-  a = b;
+  assignee = donor;
 
-  ASSERT_SEQUENCE_EQUAL(list_to_vector(b), std::vector<int>({100, 200, 300}));
+  ASSERT_SEQUENCE_EQUAL(list_to_vector(donor), std::vector<int>({100, 200, 300}));
 
-  b.pop_back();
-  auto it = a.begin();
+  donor.pop_back();
+  auto it = assignee.begin();
   ++it;
   *it = 999;
 
-  ASSERT_SEQUENCE_EQUAL(list_to_vector(b), std::vector<int>({100, 200}));
-  ASSERT_SEQUENCE_EQUAL(list_to_vector(a), std::vector<int>({100, 999, 300}));
+  ASSERT_SEQUENCE_EQUAL(list_to_vector(donor), std::vector<int>({100, 200}));
+  ASSERT_SEQUENCE_EQUAL(
+      list_to_vector(assignee), std::vector<int>({100, 999, 300}));
 }
 
 TEST(self_assignment_preserves_contents) {
@@ -172,16 +179,16 @@ TEST(self_assignment_preserves_contents) {
   lst.push_back(2);
   lst.push_back(3);
 
-  List<int> *p = &lst;
-  lst = *p;
+  List<int> *ptr_to_self = &lst;
+  lst = *ptr_to_self;
 
   ASSERT_EQUAL(lst.size(), 3);
   ASSERT_SEQUENCE_EQUAL(list_to_vector(lst), std::vector<int>({1, 2, 3}));
 }
 
-// ---------------------------------------------------------------------------
-// 3. Iterators (traversal & operators)
-// ---------------------------------------------------------------------------
+// =============================================================================
+// 3. Iterators (traversal and operators)
+// =============================================================================
 
 TEST(iterator_forward_traversal) {
   List<int> lst;
@@ -202,12 +209,12 @@ TEST(iterator_backward_from_end) {
   lst.push_back(2);
   lst.push_back(3);
 
-  std::vector<int> rev;
+  std::vector<int> reversed;
   for (auto it = lst.end(); it != lst.begin();) {
     --it;
-    rev.push_back(*it);
+    reversed.push_back(*it);
   }
-  ASSERT_SEQUENCE_EQUAL(rev, std::vector<int>({3, 2, 1}));
+  ASSERT_SEQUENCE_EQUAL(reversed, std::vector<int>({3, 2, 1}));
 }
 
 TEST(iterator_prefix_postfix_increment) {
@@ -218,12 +225,12 @@ TEST(iterator_prefix_postfix_increment) {
 
   auto it = lst.begin();
 
-  auto post = it++;
-  ASSERT_EQUAL(*post, 10);
+  auto postfix_copy = it++;
+  ASSERT_EQUAL(*postfix_copy, 10);
   ASSERT_EQUAL(*it, 20);
 
-  auto &pref = ++it;
-  ASSERT_EQUAL(*pref, 30);
+  auto &prefix_it = ++it;
+  ASSERT_EQUAL(*prefix_it, 30);
   ASSERT_EQUAL(*it, 30);
   ++it;
   ASSERT_TRUE(it == lst.end());
@@ -235,12 +242,12 @@ TEST(iterator_prefix_postfix_decrement) {
   lst.push_back(8);
 
   auto it = lst.end();
-  auto post = it--;
-  ASSERT_TRUE(post == lst.end());
+  auto postfix_copy = it--;
+  ASSERT_TRUE(postfix_copy == lst.end());
   ASSERT_EQUAL(*it, 8);
 
-  auto &pref = --it;
-  ASSERT_EQUAL(*pref, 7);
+  auto &prefix_it = --it;
+  ASSERT_EQUAL(*prefix_it, 7);
   ASSERT_TRUE(it == lst.begin());
 }
 
@@ -249,23 +256,23 @@ TEST(iterator_equality_inequality) {
   lst.push_back(1);
   lst.push_back(2);
 
-  auto a = lst.begin();
-  auto b = lst.begin();
-  ASSERT_TRUE(a == b);
-  ASSERT_FALSE(a != b);
+  auto first_it = lst.begin();
+  auto also_first = lst.begin();
+  ASSERT_TRUE(first_it == also_first);
+  ASSERT_FALSE(first_it != also_first);
 
-  ++b;
-  ASSERT_FALSE(a == b);
-  ASSERT_TRUE(a != b);
+  ++also_first;
+  ASSERT_FALSE(first_it == also_first);
+  ASSERT_TRUE(first_it != also_first);
 
-  auto e1 = lst.end();
-  auto e2 = lst.end();
-  ASSERT_TRUE(e1 == e2);
+  auto end_one = lst.end();
+  auto end_two = lst.end();
+  ASSERT_TRUE(end_one == end_two);
 }
 
-// ---------------------------------------------------------------------------
-// 4. Insert & erase (edge cases)
-// ---------------------------------------------------------------------------
+// =============================================================================
+// 4. Insert and erase (edge cases)
+// =============================================================================
 
 TEST(insert_empty_list_at_begin) {
   List<int> lst;
@@ -283,24 +290,25 @@ TEST(insert_front_middle_back_return_values) {
   lst.push_back(20);
   lst.push_back(30);
 
-  auto r_front = lst.insert(lst.begin(), 5);
-  ASSERT_TRUE(r_front == lst.begin());
-  ASSERT_EQUAL(*r_front, 5);
-  ASSERT_SEQUENCE_EQUAL(list_to_vector(lst), std::vector<int>({5, 10, 20, 30}));
+  auto at_front = lst.insert(lst.begin(), 5);
+  ASSERT_TRUE(at_front == lst.begin());
+  ASSERT_EQUAL(*at_front, 5);
+  ASSERT_SEQUENCE_EQUAL(
+      list_to_vector(lst), std::vector<int>({5, 10, 20, 30}));
 
   auto mid = lst.begin();
   ++mid;
   ++mid;
-  auto r_mid = lst.insert(mid, 15);
-  ASSERT_EQUAL(*r_mid, 15);
-  ASSERT_SEQUENCE_EQUAL(list_to_vector(lst),
-                        std::vector<int>({5, 10, 15, 20, 30}));
+  auto at_middle = lst.insert(mid, 15);
+  ASSERT_EQUAL(*at_middle, 15);
+  ASSERT_SEQUENCE_EQUAL(
+      list_to_vector(lst), std::vector<int>({5, 10, 15, 20, 30}));
 
-  auto r_back = lst.insert(lst.end(), 40);
-  ASSERT_EQUAL(*r_back, 40);
+  auto at_back = lst.insert(lst.end(), 40);
+  ASSERT_EQUAL(*at_back, 40);
   ASSERT_EQUAL(lst.back(), 40);
-  ASSERT_SEQUENCE_EQUAL(list_to_vector(lst),
-                        std::vector<int>({5, 10, 15, 20, 30, 40}));
+  ASSERT_SEQUENCE_EQUAL(
+      list_to_vector(lst), std::vector<int>({5, 10, 15, 20, 30, 40}));
 }
 
 TEST(erase_front_middle_back_returns) {
@@ -317,13 +325,13 @@ TEST(erase_front_middle_back_returns) {
 
   auto mid = lst.begin();
   ++mid;
-  auto after_mid = lst.erase(mid);
-  ASSERT_EQUAL(*after_mid, 4);
+  auto after_middle = lst.erase(mid);
+  ASSERT_EQUAL(*after_middle, 4);
   ASSERT_SEQUENCE_EQUAL(list_to_vector(lst), std::vector<int>({2, 4}));
 
-  auto last = lst.begin();
-  ++last;
-  auto after_last = lst.erase(last);
+  auto last_it = lst.begin();
+  ++last_it;
+  auto after_last = lst.erase(last_it);
   ASSERT_TRUE(after_last == lst.end());
   ASSERT_SEQUENCE_EQUAL(list_to_vector(lst), std::vector<int>({2}));
 }

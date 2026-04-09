@@ -2,53 +2,53 @@
 #define LIST_HPP
 /* List.hpp
  *
- * doubly-linked, double-ended list with Iterator interface
+ * Doubly-linked, double-ended list with Iterator interface.
  * EECS 280 List/Editor Project
  */
 
-#include <iterator> //std::bidirectional_iterator_tag
-#include <cassert>  //assert
+#include <cassert>  // assert
+#include <iterator>  // std::bidirectional_iterator_tag
 
 
 template <typename T>
 class List {
-  //OVERVIEW: a doubly-linked, double-ended list with Iterator interface
+  // OVERVIEW: a doubly-linked, double-ended list with Iterator interface
 public:
 
-  //EFFECTS:  returns true if the list is empty
+  // EFFECTS: returns true if the list is empty
   bool empty() const { return list_size == 0; }
 
-  //EFFECTS: returns the number of elements in this List
-  //HINT:    Traversing a list is really slow. Instead, keep track of the size
-  //         with a private member variable. That's how std::list does it.
+  // EFFECTS: returns the number of elements in this List
+  // HINT: traversing a list is slow; keep the size in a member variable
+  //       (same idea as std::list).
   int size() const { return list_size; }
 
-  //REQUIRES: list is not empty
-  //EFFECTS: Returns the first element in the list by reference
-  T & front() { return first->datum; }
+  // REQUIRES: list is not empty
+  // EFFECTS: returns the first element in the list by reference
+  T &front() { return first->datum; }
 
-  //REQUIRES: list is not empty
-  //EFFECTS: Returns the last element in the list by reference
-  T & back() { return last->datum; }
+  // REQUIRES: list is not empty
+  // EFFECTS: returns the last element in the list by reference
+  T &back() { return last->datum; }
 
-  //EFFECTS:  inserts datum into the front of the list
+  // EFFECTS: inserts datum at the front of the list
   void push_front(const T &datum);
 
-  //EFFECTS:  inserts datum into the back of the list
+  // EFFECTS: inserts datum at the back of the list
   void push_back(const T &datum);
 
-  //REQUIRES: list is not empty
-  //MODIFIES: invalidates all iterators to the removed element
-  //EFFECTS:  removes the item at the front of the list
+  // REQUIRES: list is not empty
+  // MODIFIES: invalidates all iterators to the removed element
+  // EFFECTS: removes the item at the front of the list
   void pop_front();
 
-  //REQUIRES: list is not empty
-  //MODIFIES: invalidates all iterators to the removed element
-  //EFFECTS:  removes the item at the back of the list
+  // REQUIRES: list is not empty
+  // MODIFIES: invalidates all iterators to the removed element
+  // EFFECTS: removes the item at the back of the list
   void pop_back();
 
-  //MODIFIES: invalidates all iterators to the removed elements
-  //EFFECTS:  removes all items from the list
+  // MODIFIES: invalidates all iterators to the removed elements
+  // EFFECTS: removes all items from the list
   void clear();
 
   List();
@@ -57,37 +57,38 @@ public:
   List &operator=(const List &rhs);
 
 private:
-  //a private type
+  // Private node type for the intrusive list.
   struct Node {
     Node *next;
     Node *prev;
     T datum;
   };
 
-  //REQUIRES: list is empty
-  //EFFECTS:  copies all nodes from other to this
+  // REQUIRES: list is empty
+  // EFFECTS: copies all nodes from other into this list
   void copy_all(const List<T> &other);
 
-  Node *first;   // points to first Node in list, or nullptr if list is empty
-  Node *last;    // points to last Node in list, or nullptr if list is empty
+  // first points to the first node, or nullptr if empty
+  Node *first;
+  // last points to the last node, or nullptr if empty
+  Node *last;
   int list_size;
 
 public:
-  ////////////////////////////////////////
   class Iterator {
     friend class List;
 
   public:
-    //OVERVIEW: Iterator interface to List
+    // OVERVIEW: Iterator interface to List
 
     Iterator() : list_ptr(nullptr), node_ptr(nullptr) {}
 
-    // Type aliases required to work with STL algorithms. Do not modify these.
+    // Type aliases required for STL algorithms. Do not modify these.
     using iterator_category = std::bidirectional_iterator_tag;
     using value_type = T;
     using difference_type = std::ptrdiff_t;
-    using pointer = T*;
-    using reference = T&;
+    using pointer = T *;
+    using reference = T &;
 
     T &operator*() const {
       assert(node_ptr);
@@ -108,84 +109,81 @@ public:
     }
 
     bool operator==(const Iterator &rhs) const {
-      return list_ptr == rhs.list_ptr && node_ptr == rhs.node_ptr;
+      return list_ptr == rhs.list_ptr and node_ptr == rhs.node_ptr;
     }
 
     bool operator!=(const Iterator &rhs) const {
-      return !(*this == rhs);
+      return not (*this == rhs);
     }
 
     // This operator will be used to test your code. Do not modify it.
-    // REQUIRES: Iterator is decrementable. All iterators associated with a
-    //           list are decrementable, including end iterators, except for
-    //           begin iterators (those equal to begin() on the list)
-    // EFFECTS:  moves this Iterator to point to the previous element
-    //           and returns a reference to this Iterator
-    Iterator& operator--() { // prefix -- (e.g. --it)
+    // REQUIRES: Iterator is decrementable. All iterators for a list are
+    //           decrementable, including end iterators, except begin().
+    // EFFECTS: moves this iterator to the previous element; returns *this
+    Iterator &operator--() {
       assert(list_ptr);
       assert(*this != list_ptr->begin());
       if (node_ptr) {
         node_ptr = node_ptr->prev;
-      } else { // decrementing an end Iterator moves it to the last element
-        node_ptr = list_ptr->last;
+        return *this;
       }
+      // Decrementing end moves to the last element.
+      node_ptr = list_ptr->last;
       return *this;
     }
 
     // This operator will be used to test your code. Do not modify it.
-    // REQUIRES: Iterator is decrementable. All iterators associated with a
-    //           list are decrementable, including end iterators, except for
-    //           begin iterators (those equal to begin() on the list)
-    // EFFECTS:  moves this Iterator to point to the previous element
-    //           and returns a copy of the original Iterator
-    Iterator operator--(int /*dummy*/) { // postfix -- (e.g. it--)
+    // REQUIRES: Iterator is decrementable (same as prefix --).
+    // EFFECTS: moves this iterator to the previous element; returns the
+    //          original iterator value
+    Iterator operator--(int /*dummy*/) {
       Iterator copy = *this;
       operator--();
       return copy;
     }
 
     // REQUIRES: Iterator is dereferenceable
-    // EFFECTS: returns the underlying element by pointer
-    // NOTE: T must be a class type to use the syntax it->. If T has a
-    //       member variable f, then it->f accesses f on the
-    //       underlying T element.
-    T* operator->() const {
+    // EFFECTS: returns a pointer to the underlying element
+    // NOTE: T must be a class type to use it->member. If T has a field f,
+    //       it->f accesses f on the underlying element.
+    T *operator->() const {
       return &operator*();
     }
 
   private:
-    const List *list_ptr; //pointer to the List associated with this Iterator
-    Node *node_ptr; //current Iterator position is a List node
+    // List this iterator is associated with
+    const List *list_ptr;
+    // Current position in the list (nullptr means end())
+    Node *node_ptr;
 
-    // construct an Iterator at a specific position in the given List
-    Iterator(const List *lp, Node *np);
+    // Iterator at a specific position in the given list
+    Iterator(const List *list_ptr_in, Node *node_ptr_in);
 
-  };//List::Iterator
-  ////////////////////////////////////////
+  };  // Iterator
 
-  // return an Iterator pointing to the first element
+  // EFFECTS: returns an iterator to the first element
   Iterator begin() const { return Iterator(this, first); }
 
-  // return an Iterator pointing to "past the end"
+  // EFFECTS: returns an iterator past the last element
   Iterator end() const { return Iterator(this, nullptr); }
 
-  //REQUIRES: i is a valid, dereferenceable iterator associated with this list
-  //MODIFIES: invalidates all iterators to the removed element
-  //EFFECTS: Removes a single element from the list container.
-  //         Returns An iterator pointing to the element that followed the
-  //         element erased by the function call
+  // REQUIRES: i is valid and dereferenceable for this list
+  // MODIFIES: invalidates iterators to the removed element
+  // EFFECTS: removes the element at i; returns an iterator to the element
+  //          that followed the erased one
   Iterator erase(Iterator i);
 
-  //REQUIRES: i is a valid iterator associated with this list
-  //EFFECTS: Inserts datum before the element at the specified position.
-  //         Returns an iterator to the the newly inserted element.
+  // REQUIRES: i is a valid iterator for this list
+  // EFFECTS: inserts datum before the element at i; returns an iterator to
+  //          the new element
   Iterator insert(Iterator i, const T &datum);
 
-};//List
+};  // List
 
 
-////////////////////////////////////////////////////////////////////////////////
+// =============================================================================
 // Member function implementations
+// =============================================================================
 
 template <typename T>
 List<T>::List() : first(nullptr), last(nullptr), list_size(0) {}
@@ -196,7 +194,8 @@ List<T>::~List() {
 }
 
 template <typename T>
-List<T>::List(const List &other) : first(nullptr), last(nullptr), list_size(0) {
+List<T>::List(const List &other)
+    : first(nullptr), last(nullptr), list_size(0) {
   copy_all(other);
 }
 
@@ -213,47 +212,49 @@ List<T> &List<T>::operator=(const List &rhs) {
 template <typename T>
 void List<T>::copy_all(const List<T> &other) {
   assert(empty());
-  for (Node *n = other.first; n != nullptr; n = n->next) {
-    push_back(n->datum);
+  for (Node *node = other.first; node; node = node->next) {
+    push_back(node->datum);
   }
 }
 
 template <typename T>
 void List<T>::push_front(const T &datum) {
-  Node *n = new Node;
-  n->datum = datum;
-  n->prev = nullptr;
+  Node *new_node = new Node;
+  new_node->datum = datum;
+  new_node->prev = nullptr;
   if (empty()) {
-    n->next = nullptr;
-    first = last = n;
-  } else {
-    n->next = first;
-    first->prev = n;
-    first = n;
+    new_node->next = nullptr;
+    first = last = new_node;
+    ++list_size;
+    return;
   }
+  new_node->next = first;
+  first->prev = new_node;
+  first = new_node;
   ++list_size;
 }
 
 template <typename T>
 void List<T>::push_back(const T &datum) {
-  Node *n = new Node;
-  n->datum = datum;
-  n->next = nullptr;
+  Node *new_node = new Node;
+  new_node->datum = datum;
+  new_node->next = nullptr;
   if (empty()) {
-    n->prev = nullptr;
-    first = last = n;
-  } else {
-    n->prev = last;
-    last->next = n;
-    last = n;
+    new_node->prev = nullptr;
+    first = last = new_node;
+    ++list_size;
+    return;
   }
+  new_node->prev = last;
+  last->next = new_node;
+  last = new_node;
   ++list_size;
 }
 
 template <typename T>
 void List<T>::pop_front() {
-  assert(!empty());
-  Node *old = first;
+  assert(not empty());
+  Node *removed = first;
   if (first == last) {
     first = nullptr;
     last = nullptr;
@@ -261,14 +262,14 @@ void List<T>::pop_front() {
     first = first->next;
     first->prev = nullptr;
   }
-  delete old;
+  delete removed;
   --list_size;
 }
 
 template <typename T>
 void List<T>::pop_back() {
-  assert(!empty());
-  Node *old = last;
+  assert(not empty());
+  Node *removed = last;
   if (first == last) {
     first = nullptr;
     last = nullptr;
@@ -276,25 +277,25 @@ void List<T>::pop_back() {
     last = last->prev;
     last->next = nullptr;
   }
-  delete old;
+  delete removed;
   --list_size;
 }
 
 template <typename T>
 void List<T>::clear() {
-  while (!empty()) {
+  while (not empty()) {
     pop_front();
   }
 }
 
 template <typename T>
-List<T>::Iterator::Iterator(const List *lp, Node *np)
-    : list_ptr(lp), node_ptr(np) {}
+List<T>::Iterator::Iterator(const List *list_ptr_in, Node *node_ptr_in)
+    : list_ptr(list_ptr_in), node_ptr(node_ptr_in) {}
 
 template <typename T>
 typename List<T>::Iterator List<T>::erase(Iterator i) {
   assert(i.list_ptr == this);
-  assert(i.node_ptr != nullptr);
+  assert(i.node_ptr);
 
   if (i.node_ptr == first) {
     pop_front();
@@ -305,13 +306,13 @@ typename List<T>::Iterator List<T>::erase(Iterator i) {
     return end();
   }
 
-  Node *cur = i.node_ptr;
-  Node *nxt = cur->next;
-  cur->prev->next = nxt;
-  nxt->prev = cur->prev;
-  delete cur;
+  Node *current = i.node_ptr;
+  Node *next_node = current->next;
+  current->prev->next = next_node;
+  next_node->prev = current->prev;
+  delete current;
   --list_size;
-  return Iterator(this, nxt);
+  return Iterator(this, next_node);
 }
 
 template <typename T>
@@ -322,22 +323,22 @@ typename List<T>::Iterator List<T>::insert(Iterator i, const T &datum) {
     push_front(datum);
     return begin();
   }
-  if (i.node_ptr == nullptr) {
+  if (not i.node_ptr) {
     push_back(datum);
     return Iterator(this, last);
   }
 
-  Node *cur = i.node_ptr;
-  Node *prv = cur->prev;
-  Node *n = new Node;
-  n->datum = datum;
-  n->next = cur;
-  n->prev = prv;
-  prv->next = n;
-  cur->prev = n;
+  Node *current = i.node_ptr;
+  Node *prev_node = current->prev;
+  Node *new_node = new Node;
+  new_node->datum = datum;
+  new_node->next = current;
+  new_node->prev = prev_node;
+  prev_node->next = new_node;
+  current->prev = new_node;
   ++list_size;
-  return Iterator(this, n);
+  return Iterator(this, new_node);
 }
 
 
-#endif // Do not remove this. Write all your code above this line.
+#endif  // Do not remove this. Write all your code above this line.

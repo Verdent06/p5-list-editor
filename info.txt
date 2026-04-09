@@ -1,0 +1,358 @@
+EECS 280 Tutorials
+Style Checking
+This tutorial will show you how to run style checking tools on your source code.
+
+Style criteria
+First, take a look at the EECS 280 C++ style guide.
+
+We will use several tools to check the style of your code.
+
+oclint checks
+
+Lines are no longer than 90 characters.
+Functions are short.
+Code is not too deeply nested.
+Functions do not have too many parameters. (Structs or classes should be used for functions that require more inputs).
+cpd checks for significant code duplication.
+
+Prerequisites
+You can connect to CAEN Linux, where the tools are installed. See the CAEN Linux tutorial for help.
+
+$ ssh awdeorio@login-course.engin.umich.edu
+...
+Success. Logging you in...
+
+You have some source code you want to check. Our example contains a long line.
+
+test.cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+  cout << "hello world this is a veryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy long line" << endl;
+}
+
+Make sure the code compiles before running style checks. If you have a Makefile, you could just type make.
+
+$ g++ test.cpp -o test
+We prohibit the phrase oclint, regardless of capitalization, from appearing in your source files, as it can be used to turn off oclint checks.
+
+Check style manually
+Run oclint on test.cpp. You’ll need to load a module on CAEN, which adds a tool that isn’t available in the standard environment. There’s a long line in our example, which results in error output.
+
+$ hostname
+caen-vnc-vm16.engin.umich.edu
+$ module load oclint
+$ oclint \
+    -rule=LongLine \
+    -rule=HighNcssMethod \
+    -rule=DeepNestedBlock \
+    -rule=TooManyParameters \
+    -rc=LONG_LINE=90 \
+    -rc=NCSS_METHOD=40 \
+    -rc=NESTED_BLOCK_DEPTH=4 \
+    -rc=TOO_MANY_PARAMETERS=4 \
+    -max-priority-1 0 \
+    -max-priority-2 0 \
+    -max-priority-3 0 \
+    test.cpp \
+    -- -xc++ --std=c++17
+
+OCLint Report
+
+Summary: TotalFiles=1 FilesWithViolations=1 P1=0 P2=0 P3=1
+
+/home/awdeorio/test.cpp:6:1: long line [size|P3] Line with 104 characters exceeds limit of 90
+
+[OCLint (https://oclint.org) v22.02]
+
+oclint: error: violations exceed threshold
+P1=0[0] P2=0[0] P3=1[0]
+
+Run cpd on test.cpp. You’ll need to load the pmd module, which contains cpd. There isn’t any duplicate code in our example, so there is no error output.
+
+$ hostname
+caen-vnc-vm16.engin.umich.edu
+$ module load pmd
+$ cpd \
+    --minimum-tokens 100 \
+    --language cpp \
+    --failOnViolation true \
+    --files test.cpp
+Added /afs/umich.edu/user/a/w/awdeorio/test.cpp
+
+Check style automatically
+You can run the style checks using the Makefile on an EECS 280 project.
+
+Copy code to CAEN Linux
+We’re going to synchronize our code to CAEN Linux many times. These shortcuts will let you synchronize quickly and easily.
+
+Be sure that you can avoid repeated two-factor authentication (2FA). In a separate terminal, connect to CAEN Linux with SSH so you won’t have to enter your password again.
+
+$ ssh awdeorio@login-course.engin.umich.edu
+Password:
+Duo two-factor login for awdeorio
+
+Enter a passcode or select one of the following options:
+
+ 1. Duo Push to XXX-XXX-3142
+ 2. Phone call to XXX-XXX-3142
+ 3. SMS passcodes to XXX-XXX-3142
+
+Passcode or option (1-3): 1
+Success. Logging you in...
+
+$
+
+If you didn’t already, add a make sync shortcut to your Makefile.
+
+Clean up (from your laptop).
+
+$ hostname
+manzana.local
+$ pwd
+/Users/awdeorio/src/eecs280/p1-stats
+$ make clean
+
+Copy (from your laptop).
+
+$ hostname
+manzana.local
+$ pwd
+/Users/awdeorio/src/eecs280/p1-stats
+$ make sync
+rsync -rtv --delete --exclude '.git*' --filter=':- .gitignore' ./  awdeorio@login-course.engin.umich.edu:p1-stats-copy/
+
+Connect to CAEN Linux
+Connect to CAEN Linux via ssh. If you’re already connected, you don’t need to connect again.
+
+$ hostname
+manzana.local
+$ ssh awdeorio@login-course.engin.umich.edu
+Success. Logging you in...
+...
+$ hostname
+caen-vnc-vm16.engin.umich.edu
+
+Change directory to the folder containing your source code. In this tutorial, we’re going to use the copy created by rsync via make sync. Note that you might also have a p1-stats directory created during the Version control on CAEN Linux tutorial.
+
+$ pwd
+/home/awdeorio
+$ ls
+p1-stats p1-stats-copy
+$ cd p1-stats-copy
+$ pwd
+/home/awdeorio/p1-stats-copy
+
+Run style checks
+We’ve provided a make style Makefile target to run all the style checks for you.
+
+$ hostname
+caen-vnc-vm16.engin.umich.edu
+$ pwd
+/home/awdeorio/p1-stats-copy
+$ make style
+...
+EECS 280 style checks PASS
+
+Acknowledgments
+Original document written by Andrew DeOrio awdeorio@umich.edu.
+
+This document is licensed under a Creative Commons Attribution-NonCommercial 4.0 License. You’re free to copy and share this document, but not to sell it. You may not share source code provided with this document.
+
+This site is open source. Improve this page.
+Contents
+
+Style criteria
+Prerequisites
+Check style manually
+Check style automatically
+Copy code to CAEN Linux
+Connect to CAEN Linux
+Run style checks
+Acknowledgments
+
+
+
+EECS 280 Tutorials
+EECS 280 C++ Style Guide
+The goal of coding standards is to make code easier to understand and maintain. Refer to these guidelines as you are writing code, not just at the end, to develop good coding habits.
+
+Names
+Use meaningful variable names. If a variable name is not descriptive and its purpose is not clear by convention, choose a different name.
+Avoid single-letter variable names unless their meaning is very clear by convention, mathematical definition, or documentation.
+i as a counter variable name is OK.
+Avoid letters that can be confused for numbers or other letters, such as l (that’s lowercase L).
+Longer names are usually better, i.e. spammify instead of sfy.
+Avoid abbreviations unless there is context that makes the abbreviation easy to decipher. For example, img is a reasonable abbreviation in an image processing program.
+Avoid acronyms unless there is very strong context or documentation as to their meaning.
+Use left_bower instead of lb, rodent_of _unusual_size instead of rous.
+Global constant names should use a consistent naming convention to make it clear that you are dealing with a global constant. Some possible naming conventions are:
+All caps: const int MY_CONSTANT = 42;
+A leading c_: const int c_my_constant = 42;
+It’s common to use snake_case or camelCase for variable and function names, but be consistent.
+Start custom type names (classes, structs, and type aliases) with a capital letter.
+Comments
+Comments help people understand your code. They are for humans, not for computers.
+Comments go on their own line(s) unless they are extremely short.
+Don’t comment basic stuff such as // looping from 0 to size - 1.
+If you find yourself wanting to comment a complex or long piece of code, consider putting the code into a function.
+Use comments to help your future self and other programmers. If you looked at your code a month from now, would you remember what it did?
+You may use /* ... */ or // for comments spanning multiple lines, just be consistent.
+Functions
+Use functions to improve code readability and avoid duplication.
+Document functions with an “RME” (requires, modifies, effects) to indicate what they do.
+Make functions short and targeted.
+A function has a specific purpose and shouldn’t try to be a “god” function doing it all. This also applies to the main() function.
+It is perfectly valid and encouraged for functions to call other functions!
+These are a few clues that a function is too complex. We check for function complexity in EECS 280 automated style checking.
+Many lines of code (not counting comments or braces) in one function (e.g., >40)
+Deeply nested code (e.g., >4 blocks deep)
+Too many function parameters (e.g., >4)
+If a function is complicated, try to make it less complicated by splitting it up.
+Avoid “single point of return.” Prefer multiple return statements.
+If you ever reach a point in a function where you know what the return value will be, just return it.
+Change:	To:
+int spammify(int egg) {
+  int result = 0;
+  if (egg < 42) {
+    result = egg * 2;
+  } else {
+    result = egg - 1;
+  }
+  return result;
+}
+int spammify(int egg) {
+  if (egg < 42) {
+    return egg * 2
+  }
+  return egg - 1;
+}
+
+
+
+Formatting
+Curly braces can be on the same line or their own line, just be consistent.
+This is fine:	This is also fine:
+if (i > 1) {
+  ...
+}
+
+if (i > 1)
+{
+  ...
+}
+Don’t mix tabs and spaces. Most editors and IDEs allow you to set this ahead of time, so do that and be consistent. You can also configure them to insert the right number of spaces when you press the tab key.
+Avoid excessively long lines of code. 80 characters is a traditional limit, but some teams will choose to increase this slightly.
+The important thing is to avoid cramming a ton of expressions into one line.
+Include spaces between operators (<<, >, <=, +, -, *, %, ||, &&, etc).
+This is easier to read:	Bad:
+if (foo >= (bar * 2) && baz) {
+  cout << a + (b % c);
+}
+if(foo>=(bar*2)&&baz) {
+  cout<<a+(b%c);
+}
+Note: Some operators (., ->, ++, --) are traditionally used without spaces:
+
+spam.egg
+spam_ptr->egg
+cheese++
+++cheese
+cheese--
+--cheese
+Other ways to make your code better
+Avoid using “magic” numbers, strings, etc. Prefer to use a constant instead.
+Do NOT use #define to define constants. Declare them as const variables instead.
+Avoid constants where the name is the same as the value:
+Change:	To:
+const int TWO = 2;
+const int NUM_PLAYERS = 2;
+Avoid using the this pointer for member access.
+Only use the this pointer when you need a pointer or reference to the object a member function is operating on.
+If you have an if statement whose body ends with a return statement, you can omit the else block.
+Change:	To:
+if (condition) {
+  return 42;
+}
+else {
+  return 43;
+}
+if (condition) {
+  return 42;
+}
+return 43;
+
+
+When checking bools, pointers, and streams in conditionals, prefer checking the “truthiness” of the value.
+Change:	To:
+if (my_bool == true) { ... }
+if (my_bool) { ... }
+if (my_ptr == nullptr) { ... }
+if (not my_ptr) { ... }
+if (my_stream.good()) { ... }
+if (my_stream.bad()) { ... }
+if (my_stream.fail()) { ... }
+if (my_stream.eof()) { ... }
+if (my_stream) { ... }
+if (not my_stream) { ... }
+if (not my_stream) { ... }
+if (not my_stream) { ... }
+Note: The keywords and, or, and not can be used instead of &&, ||, and ! in C++. Which ones you use is up to you as long as you do so consistently.
+
+If you need to return true or false based on the result of a conditional, just return the result of the conditional instead of explicit true/false
+Change:	To:
+if (spam == 42) {
+  return true;
+}
+else {
+  return false;
+}
+return spam == 42;
+
+
+
+
+
+Avoid passing large objects/containers by value.
+Copying large objects is expensive.
+If a function is not supposed to modify the object, pass by const reference!
+This includes when using a range-based for loop:
+for (const auto& thing : things) { ... }
+Avoid using public member variables.
+Breaks abstraction and encapsulation.
+If you have plain old data (POD), consider using a struct.
+Don’t explicitly implement the Big 3 if the compiler-supplied versions will work.
+Dangerous things that you should never do
+goto - just don’t use it. Use functions, loops, conditionals, and exceptions instead.
+Global variables (global constants are different, see bullet 5 under Names section).
+Dangerous because they can be changed at any point in your program. Use function parameters instead.
+Including .cpp files - e.g. #include "file.cpp".
+using namespace std inside of a header file.
+If someone else includes your header and if you have namespace using statements in it, then these statements become part of their code, appearing at the point your header file was included. They are stuck with whatever namespace using decision you made, and can’t override it with their own.
+Project-specific ways to make your code better
+Image Processing: Respect the interfaces. That includes in your unit tests!
+Euchre:
+Don’t copy paste calls to deal_one(). Write a function.
+Write moar functions.
+Machine Learning: Write moar functions.
+Further reading
+EECS 381
+Google
+Mozilla
+PEP 8, a widely used standard for Python
+Acknowledgments
+This document is licensed under a Creative Commons Attribution-NonCommercial 4.0 License. You’re free to copy and share this document, but not to sell it. You may not share source code provided with this document.
+
+This site is open source. Improve this page.
+Contents
+
+Names
+Comments
+Functions
+Formatting
+Other ways to make your code better
+Dangerous things that you should never do
+Project-specific ways to make your code better
+Further reading
+Acknowledgments
