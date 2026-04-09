@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     TextBuffer_public_tests.exe
+relocations:     []
+...
