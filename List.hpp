@@ -25,11 +25,16 @@ public:
 
   // REQUIRES: list is not empty
   // EFFECTS: returns the first element in the list by reference
-  T &front() { return first->datum; }
-
+  T &front() { 
+    assert(!empty());
+    return first->datum; 
+  }
   // REQUIRES: list is not empty
   // EFFECTS: returns the last element in the list by reference
-  T &back() { return last->datum; }
+  T &back() { 
+    assert(!empty());
+    return last->datum; 
+  }
 
   // EFFECTS: inserts datum at the front of the list
   void push_front(const T &datum);
